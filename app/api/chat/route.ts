@@ -1,6 +1,9 @@
 import { kv } from '@vercel/kv'
 import { OpenAIStream, StreamingTextResponse } from 'ai'
 import OpenAI from 'openai'
+import { VercelPostgres } from 'langchain/vectorstores/vercel_postgres';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+import { Document } from 'langchain/document'
 
 import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
@@ -10,6 +13,11 @@ export const runtime = 'edge'
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
+
+const combineDocumentsFn = (docs: Document[]) => {
+  const serializedDocs = docs.map((doc) => doc.pageContent);
+  return serializedDocs.join("\n\n");
+}
 
 export async function POST(req: Request) {
   const json = await req.json()
@@ -26,8 +34,24 @@ export async function POST(req: Request) {
     openai.apiKey = previewToken
   }
 
+  const latestMessage = messages[messages.length - 1]
+
+  const vectorStore = await VercelPostgres.initialize(new OpenAIEmbeddings())
+
+  // Search for the most similar documents
+  const vectorSearchResult = await vectorStore.similaritySearch(latestMessage.content, 20);
+
+  const context = combineDocumentsFn(vectorSearchResult)
+
+  messages.unshift({
+    "role": "system",
+    "content": `Use the following context to answer the next question.
+      If you're not sure then respond "I don't know". 
+      Context: ${context}`
+  })
+
   const res = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4',
     messages,
     temperature: 0.7,
     stream: true
