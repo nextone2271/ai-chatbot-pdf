@@ -46,7 +46,6 @@ export async function POST(req: Request) {
   messages.unshift({
     "role": "system",
     "content": `Use the following context to answer the next question.
-      If you're not sure then respond "I don't know". 
       Context: ${context}`
   })
 
