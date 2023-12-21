@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const vectorStore = await VercelPostgres.initialize(new OpenAIEmbeddings())
 
   // Search for the most similar documents
-  const vectorSearchResult = await vectorStore.similaritySearch(latestMessage.content, 20);
+  const vectorSearchResult = await vectorStore.similaritySearch(latestMessage.content, 10);
 
   const context = combineDocumentsFn(vectorSearchResult)
 
