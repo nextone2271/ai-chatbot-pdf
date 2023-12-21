@@ -6,7 +6,7 @@ const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter")
 const populateVectorStore = async () => {
     console.log('Loading PDF...')
 
-    const loader = new PDFLoader("../intelligent_programmer.pdf");
+    const loader = new PDFLoader("../intex-spa.pdf");
 
     const docs = await loader.load();
 

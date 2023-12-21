@@ -43,14 +43,14 @@ export async function POST(req: Request) {
 
   const context = combineDocumentsFn(vectorSearchResult)
 
-  messages.unshift({
+  messages.push({
     "role": "system",
     "content": `Use the following context to answer the next question.
       Context: ${context}`
   })
 
   const res = await openai.chat.completions.create({
-    model: 'gpt-4',
+    model: 'gpt-3.5-turbo',
     messages,
     temperature: 0.7,
     stream: true
@@ -62,6 +62,7 @@ export async function POST(req: Request) {
       const id = json.id ?? nanoid()
       const createdAt = Date.now()
       const path = `/chat/${id}`
+      messages.pop()
       const payload = {
         id,
         title,
